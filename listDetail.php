@@ -1,23 +1,37 @@
 <?php
+session_start();
 include 'database/db.php';
 global $conn;
 
+$userId = $_SESSION['user_id'];
 $listId = $_GET['id'];
-$lists = $conn->prepare("SELECT id, name, description FROM lists WHERE id = ?");
-$lists->execute([$listId]);
+
+$userStmt = $conn->prepare("SELECT name, email FROM users WHERE id = ?");
+$userStmt->execute([$userId]);
+$user = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+$lists = $conn->prepare("SELECT id, name, description FROM lists WHERE id = ? AND user_id = ?");
+$lists->execute([$listId, $userId]);
 $topic = $lists->fetch(PDO::FETCH_ASSOC);
+
+//to handle header:index.php when deleting a card doesnt belong to any list.
+if (!$topic) {
+    //list does not found or belongs to another user
+    header("Location: index.php");
+    exit();
+}
 
 if (isset($_POST['sub'])) {
     $name = $_POST['todo'];
     $deadline = $_POST['date'];
 
-    //the MAX(position) logic must be separated into two queries, which at first I did it at once and got error.
-    $positionQuery = $conn->prepare("SELECT COALESCE(MAX(position), 0) + 1 AS new_position FROM cards WHERE category = ?");
-    $positionQuery->execute([$listId]);
+    // The MAX(position) logic must be separated into two queries
+    $positionQuery = $conn->prepare("SELECT COALESCE(MAX(position), 0) + 1 AS new_position FROM cards WHERE category = ? AND user_id = ?");
+    $positionQuery->execute([$listId, $userId]);
     $newPosition = $positionQuery->fetch(PDO::FETCH_ASSOC)['new_position'];
 
-    $insert = $conn->prepare("INSERT INTO cards (name, deadline, category, position) VALUES (?, ?, ?, ?)");
-    $insert->execute([$name, $deadline, $listId, $newPosition]);
+    $insert = $conn->prepare("INSERT INTO cards (name, deadline, category, position, user_id) VALUES (?, ?, ?, ?, ?)");
+    $insert->execute([$name, $deadline, $listId, $newPosition, $userId]);
 
     header('Location: listDetail.php?id=' . urlencode($listId));
     exit();
@@ -45,8 +59,8 @@ if (isset($_POST['sub'])) {
             <div class="profile center top">
                 <img src="img/profile.png" alt="">
                 <div>
-                    <p class="name" id="name">User Name</p>
-                    <p class="email" id="email">user@example.com</p>
+                    <p class="name" id="name"><?= htmlspecialchars($user['name']) ?></p>
+                    <p class="email" id="email"><?= htmlspecialchars($user['email']) ?></p>
                 </div>
             </div>
             <div class="menu center">
@@ -64,8 +78,8 @@ if (isset($_POST['sub'])) {
                     <div class="list">
                         <li><a href="index.php">Home</a></li>
                         <?php
-                        $lists = $conn->prepare("SELECT id, name FROM lists ORDER BY id");
-                        $lists->execute();
+                        $lists = $conn->prepare("SELECT id, name FROM lists WHERE user_id = ? ORDER BY id");
+                        $lists->execute([$userId]);
                         foreach ($lists->fetchAll(PDO::FETCH_ASSOC) as $list) { ?>
                             <li><a href="listDetail.php?id=<?= htmlspecialchars($list['id']) ?>"><?= htmlspecialchars($list['name']) ?></a></li>
                         <?php } ?>
@@ -82,14 +96,15 @@ if (isset($_POST['sub'])) {
                 </div>
                 <div class="card-holder" id="taskList">
                     <?php
-                    $cards = $conn->prepare("SELECT id, name, deadline, category, position FROM cards WHERE category = ? ORDER BY position ASC");
-                    $cards->execute([$listId]);
+                    $cards = $conn->prepare("SELECT id, name, deadline, category, position FROM cards WHERE category = ? AND user_id = ? ORDER BY position ASC");
+                    $cards->execute([$listId, $userId]);
                     foreach ($cards->fetchAll(PDO::FETCH_ASSOC) as $card) {
                         $taskId = htmlspecialchars($card['id']);
                         $taskName = htmlspecialchars($card['name']);
                         $deadline = htmlspecialchars($card['deadline']);
                         ?>
                         <div class="card align" data-id="<?= $taskId ?>" style="opacity: 1;">
+                            <input type="checkbox" name="task" id="task-<?= $taskId ?>" onchange="toggleTask(<?= $taskId ?>)">
                             <div class="marker">
                                 <span><?= $taskName ?></span>
                                 <p class="date"><?= $deadline ?></p>
@@ -117,5 +132,6 @@ if (isset($_POST['sub'])) {
     </div>
 </div>
 <script src="js/reorder.js"></script>
+
 </body>
 </html>
