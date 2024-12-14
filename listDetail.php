@@ -95,8 +95,13 @@ if (isset($_POST['sub'])) {
                     <h3><?= htmlspecialchars($topic['description']) ?></h3>
                 </div>
                 <div class="card-holder" id="taskList">
+                    <!-- Modal Structure for AI Help -->
+                    <div id="aiHelpModal" style="display:none;">
+                        <div id="loadingSpinner" style="display:none;">Loading...</div>
+                        <div id="aiHelpMessage">Loading AI suggestion...</div>
+                    </div>
                     <?php
-                    $cards = $conn->prepare("SELECT id, name, deadline, category, position FROM cards WHERE category = ? AND user_id = ? ORDER BY position ASC");
+                    $cards = $conn->prepare("SELECT id, name, deadline, category, position, completed FROM cards WHERE category = ? AND user_id = ? ORDER BY completed ASC, position ASC");
                     $cards->execute([$listId, $userId]);
                     foreach ($cards->fetchAll(PDO::FETCH_ASSOC) as $card) {
                         $taskId = htmlspecialchars($card['id']);
@@ -104,17 +109,26 @@ if (isset($_POST['sub'])) {
                         $deadline = htmlspecialchars($card['deadline']);
                         ?>
                         <div class="card align" data-id="<?= $taskId ?>" style="opacity: 1;">
-                            <input type="checkbox" name="task" id="task-<?= $taskId ?>" onchange="toggleTask(<?= $taskId ?>)">
-                            <div class="marker">
+                            <input type="checkbox" name="task" id="task-<?= $taskId ?>" onchange="toggleTask(<?= $taskId ?>)" <?= $card['completed'] ? 'checked' : '' ?>>
+                            <div class="marker" style="<?= $card['completed'] ? 'text-decoration: line-through; opacity: 0.6;' : '' ?>">
                                 <span><?= $taskName ?></span>
                                 <p class="date"><?= $deadline ?></p>
                             </div>
+
+                            <a href="#"
+                               onclick="openAiHelp(<?= $taskId ?>, '<?= htmlspecialchars($taskName) ?>', '<?= htmlspecialchars($deadline) ?>'); return false;"
+                               style="<?= $card['completed'] ? 'display: none;' : '' ?>">
+                                <i class="bx bx-brain"></i> AI Help
+                            </a>
+
                             <a href="deleteCard.php?id=<?= $taskId ?>&list_id=<?= $listId ?>"
                                onclick="return confirm('Are you sure you want to delete this task?')">
                                 <i class="bx bx-trash-alt"></i> Delete
                             </a>
                             <span class="drag-handle">&#9776;</span>
                         </div>
+
+
                     <?php } ?>
                 </div>
 
@@ -131,7 +145,47 @@ if (isset($_POST['sub'])) {
         </div>
     </div>
 </div>
+
 <script src="js/reorder.js"></script>
+<script src="js/toggleTask.js"></script>
+<script>
+    window.openAiHelp = async function (taskId, taskName, deadline) {
+        const modal = document.getElementById('aiHelpModal');
+        const messageElement = document.getElementById('aiHelpMessage');
+        const spinner = document.getElementById('loadingSpinner');
+        modal.style.display = 'block';
+        messageElement.innerText = `Fetching AI suggestion for "${taskName}"...`;
+        spinner.style.display = 'block'; // Show the spinner
+
+        try {
+            const response = await fetch('aiRequest.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    taskName: taskName,
+                    deadline: deadline,
+                    userQuery: `Give me some steps to complete the task "${taskName}" by ${deadline}`
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.message) {
+                    messageElement.innerText = `AI Suggestion for "${taskName}":\n\n${data.message}`;
+                } else {
+                    messageElement.innerText = 'No AI response available. Please try again.';
+                }
+            } else {
+                messageElement.innerText = 'Failed to fetch AI suggestions. Please try again.';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            messageElement.innerText = 'An error occurred while fetching AI suggestions.';
+        }
+
+        spinner.style.display = 'none'; // Hide the spinner once response is received
+    };
+</script>
 
 </body>
 </html>

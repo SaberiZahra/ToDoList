@@ -5,15 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="151fbfd9-53a4-46f1-8dff-5ea549e7e76f" name="Changes" comment="adding multiuser access">
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/addList.php" beforeDir="false" afterPath="$PROJECT_DIR$/addList.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/checkuser.php" beforeDir="false" afterPath="$PROJECT_DIR$/checkUser.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deleteCard.php" beforeDir="false" afterPath="$PROJECT_DIR$/deleteCard.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deleteList.php" beforeDir="false" afterPath="$PROJECT_DIR$/deleteList.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.php" beforeDir="false" afterPath="$PROJECT_DIR$/index.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/listDetail.php" beforeDir="false" afterPath="$PROJECT_DIR$/listDetail.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/login.php" beforeDir="false" afterPath="$PROJECT_DIR$/login.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,6 +16,13 @@
   </component>
   <component name="ComposerSettings">
     <execution />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -69,7 +70,8 @@
       <workItem from="1732940230116" duration="15685000" />
       <workItem from="1733155281420" duration="4778000" />
       <workItem from="1733546631312" duration="14535000" />
-      <workItem from="1734101461556" duration="1321000" />
+      <workItem from="1734101461556" duration="1803000" />
+      <workItem from="1734150248128" duration="13844000" />
     </task>
     <task id="LOCAL-00001" summary="adding multiuser access">
       <option name="closed" value="true" />
@@ -88,15 +90,5 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="adding multiuser access" />
     <option name="LAST_COMMIT_MESSAGE" value="adding multiuser access" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="php">
-          <url>file://$PROJECT_DIR$/index.php</url>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

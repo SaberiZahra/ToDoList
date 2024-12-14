@@ -114,7 +114,7 @@ $user = $userStmt->fetch(PDO::FETCH_ASSOC);
                 <div class="card-holder" id="TaskContainer">
                     <div id="taskList">
                         <?php
-                        $todos = $conn->prepare("SELECT id, name, deadline, category, position FROM cards WHERE user_id = ? ORDER BY position ASC");
+                        $todos = $conn->prepare("SELECT id, name, deadline, category, position, completed FROM cards WHERE user_id = ? ORDER BY completed ASC, position ASC");
                         $todos->execute([$userId]);
                         $todo = $todos->fetchAll(PDO::FETCH_ASSOC);
 
@@ -125,8 +125,8 @@ $user = $userStmt->fetch(PDO::FETCH_ASSOC);
                             $deadline = htmlspecialchars($task['deadline']);
                             ?>
                             <div class="card align" data-id="<?= $taskId ?>" style="opacity: 1;">
-                                <input type="checkbox" name="task" id="task-<?= $taskId ?>" onchange="toggleTask(<?= $taskId ?>)">
-                                <div class="marker">
+                                <input type="checkbox" name="task" id="task-<?= $taskId ?>" onchange="toggleTask(<?= $taskId ?>)" <?= $task['completed'] ? 'checked' : '' ?>>
+                                <div class="marker" style="<?= $task['completed'] ? 'text-decoration: line-through; opacity: 0.6;' : '' ?>">
                                     <span id="task-name-<?= $taskId ?>"><?= $taskName ?></span>
                                     <p class="date today"><?= $deadline ?></p>
                                 </div>
@@ -158,6 +158,7 @@ $user = $userStmt->fetch(PDO::FETCH_ASSOC);
                         </div>
                     </div>
                 </div>
+                <script src="js/toggleTask.js"></script>
                 <script>
                     function searchCards() {
                         const searchValue = document.getElementById('search').value.toLowerCase();
@@ -191,8 +192,6 @@ $user = $userStmt->fetch(PDO::FETCH_ASSOC);
                             .catch(error => console.error('Error fetching search results:', error));
                     }
                 </script>
-
-
             </div>
     </div>
 </body>
