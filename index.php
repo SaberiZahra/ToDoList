@@ -51,18 +51,33 @@ $user = $userStmt->fetch(PDO::FETCH_ASSOC);
                     <input type="search" name="search" id="search" placeholder=" Search" onkeyup="searchCards()">
                 </div>
                 <div class="list">
-
                     <ul>
+                        <li><a href="index.php">Home</a></li>
+                        <li><a href="listDetail.php?id=assigned">Assigned Tasks</a></li>
                         <?php
-                        $lists = $conn->prepare("SELECT id, name, description FROM lists WHERE user_id = ? ORDER BY id");
+                        // Fetch both user-specific and common lists (id=0 as an example for common lists)
+                        $lists = $conn->prepare("
+            SELECT id, name 
+            FROM lists 
+            WHERE user_id = ? OR id = 0 
+            ORDER BY id
+        ");
                         $lists->execute([$userId]);
-                        $list = $lists->fetchAll(PDO::FETCH_ASSOC);
-                        foreach ($list as $topic) { ?>
-                            <li> <a href="listDetail.php?id=<?= htmlspecialchars($topic['id']) ?>"> <?= htmlspecialchars($topic['name']) ?> </a> </li>
+                        foreach ($lists->fetchAll(PDO::FETCH_ASSOC) as $list) { ?>
+                            <li>
+                                <a href="listDetail.php?id=<?= htmlspecialchars($list['id']) ?>">
+                                    <?= htmlspecialchars($list['name']) ?>
+                                </a>
+                            </li>
                         <?php } ?>
-                        <li id="add-new"><a href="#" onclick="showAddListForm()"><i class='bx bx-plus'></i><span>Add list</span></a></li>
+                        <li id="add-new">
+                            <a href="#" onclick="showAddListForm()">
+                                <i class='bx bx-plus'></i><span>Add list</span>
+                            </a>
+                        </li>
                     </ul>
 
+                    <!-- Form for adding a new list -->
                     <div id="add-list-form" style="display: none;">
                         <form action="addList.php" method="post">
                             <input type="text" name="list_name" placeholder="New list name" required>
@@ -71,17 +86,17 @@ $user = $userStmt->fetch(PDO::FETCH_ASSOC);
                             <button type="button" onclick="hideAddListForm()">Cancel</button>
                         </form>
                     </div>
-
-                    <script>
-                        function showAddListForm() {
-                            document.getElementById('add-list-form').style.display = 'block';
-                        }
-
-                        function hideAddListForm() {
-                            document.getElementById('add-list-form').style.display = 'none';
-                        }
-                    </script>
                 </div>
+
+                <script>
+                    function showAddListForm() {
+                        document.getElementById('add-list-form').style.display = 'block';
+                    }
+
+                    function hideAddListForm() {
+                        document.getElementById('add-list-form').style.display = 'none';
+                    }
+                </script>
             </div>
 
             <div class="logout center">

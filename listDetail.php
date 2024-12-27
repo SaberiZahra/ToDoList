@@ -14,6 +14,11 @@ $lists = $conn->prepare("SELECT id, name, description FROM lists WHERE id = ? AN
 $lists->execute([$listId, $userId]);
 $topic = $lists->fetch(PDO::FETCH_ASSOC);
 
+if ($listId === 'common') {
+    header('Location: commonTasks.php');
+    exit();
+}
+
 //to handle header:index.php when deleting a card doesnt belong to any list.
 if (!$topic) {
     //list does not found or belongs to another user
@@ -77,6 +82,7 @@ if (isset($_POST['sub'])) {
                     </form>
                     <div class="list">
                         <li><a href="index.php">Home</a></li>
+                        <li><a href="listDetail.php?id=assigned">Assigned Tasks</a></li>
                         <?php
                         $lists = $conn->prepare("SELECT id, name FROM lists WHERE user_id = ? ORDER BY id");
                         $lists->execute([$userId]);
@@ -157,6 +163,11 @@ if (isset($_POST['sub'])) {
         messageElement.innerText = `Fetching AI suggestion for "${taskName}"...`;
         spinner.style.display = 'block'; // Show the spinner
 
+        // Enhanced query for better AI understanding
+        const userQuery = `
+    The task is titled "${taskName}", with a deadline of ${deadline}. The goal is to complete this task successfully by the deadline.
+    Could you please suggest steps or actions that could help the user accomplish this task? Feel free to provide any useful tips, reminders, or methods.`;
+
         try {
             const response = await fetch('aiRequest.php', {
                 method: 'POST',
@@ -164,7 +175,7 @@ if (isset($_POST['sub'])) {
                 body: JSON.stringify({
                     taskName: taskName,
                     deadline: deadline,
-                    userQuery: `Give me some steps to complete the task "${taskName}" by ${deadline}`
+                    userQuery: userQuery // Use the enhanced query here
                 })
             });
 

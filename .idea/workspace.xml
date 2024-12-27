@@ -6,6 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="151fbfd9-53a4-46f1-8dff-5ea549e7e76f" name="Changes" comment="adding multiuser access">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/aiRequest.php" beforeDir="false" afterPath="$PROJECT_DIR$/aiRequest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/css/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/style.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.php" beforeDir="false" afterPath="$PROJECT_DIR$/index.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/listDetail.php" beforeDir="false" afterPath="$PROJECT_DIR$/listDetail.php" afterDir="false" />
     </list>
@@ -71,7 +73,9 @@
       <workItem from="1733155281420" duration="4778000" />
       <workItem from="1733546631312" duration="14535000" />
       <workItem from="1734101461556" duration="1803000" />
-      <workItem from="1734150248128" duration="13844000" />
+      <workItem from="1734150248128" duration="15057000" />
+      <workItem from="1734758459217" duration="10290000" />
+      <workItem from="1735284194409" duration="3465000" />
     </task>
     <task id="LOCAL-00001" summary="adding multiuser access">
       <option name="closed" value="true" />
