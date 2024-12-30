@@ -6,22 +6,20 @@ global $conn;
 $userId = $_SESSION['user_id'];
 $listId = $_GET['id'];
 
-$userStmt = $conn->prepare("SELECT name, email FROM users WHERE id = ?");
+$userStmt = $conn->prepare("SELECT name, email, isAdmin FROM users WHERE id = ?");
 $userStmt->execute([$userId]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+$isAdmin = $user['isAdmin'] ?? false; // Get admin status
+$hasAccess = (($isAdmin && $listId == 0) || $listId != 0); //only admin can change common tasks.
 
-$lists = $conn->prepare("SELECT id, name, description FROM lists WHERE id = ? AND user_id = ?");
+
+$lists = $conn->prepare("SELECT id, name, description FROM lists WHERE id = ? AND (user_id = ? OR user_id = 0)");
 $lists->execute([$listId, $userId]);
 $topic = $lists->fetch(PDO::FETCH_ASSOC);
 
-if ($listId === 'common') {
-    header('Location: commonTasks.php');
-    exit();
-}
-
-//to handle header:index.php when deleting a card doesnt belong to any list.
-if (!$topic) {
-    //list does not found or belongs to another user
+// If no data is found, redirect unless it's "common tasks"
+$listId = $_GET['id'] ?? null;
+if (!$topic && $listId != 'common') {
     header("Location: index.php");
     exit();
 }
@@ -70,27 +68,34 @@ if (isset($_POST['sub'])) {
             </div>
             <div class="menu center">
                 <ul>
-                    <form action="deleteList.php" method="post" onsubmit="return confirm('Are you sure you want to delete this list?')">
-                        <input type="hidden" name="id" value="<?= htmlspecialchars($topic['id']) ?>">
-                        <button type="submit">Delete List</button>
-                    </form>
-                    <form action="editList.php" method="post">
-                        <input type="hidden" name="id" value="<?= htmlspecialchars($topic['id']) ?>">
-                        <input type="text" name="list_name" value="<?= htmlspecialchars($topic['name']) ?>" required>
-                        <textarea name="list_description" required><?= htmlspecialchars($topic['description']) ?></textarea>
-                        <button type="submit">Edit List</button>
-                    </form>
+                    <?php if($hasAccess) { ?>
+                        <form action="deleteList.php" method="post" onsubmit="return confirm('Are you sure you want to delete this list?')">
+                            <input type="hidden" name="id" value="<?= htmlspecialchars($topic['id']) ?>">
+                            <button type="submit">Delete List</button>
+                        </form>
+                        <form action="editList.php" method="post">
+                            <input type="hidden" name="id" value="<?= htmlspecialchars($topic['id']) ?>">
+                            <input type="text" name="list_name" value="<?= htmlspecialchars($topic['name']) ?>" required>
+                            <textarea name="list_description" required><?= htmlspecialchars($topic['description']) ?></textarea>
+                            <button type="submit">Edit List</button>
+                        </form>
+                    <?php } ?>
+
                     <div class="list">
                         <li><a href="index.php">Home</a></li>
-                        <li><a href="listDetail.php?id=assigned">Assigned Tasks</a></li>
+                        <li><a href="assignTask.php">Assigned Tasks</a></li>
                         <?php
-                        $lists = $conn->prepare("SELECT id, name FROM lists WHERE user_id = ? ORDER BY id");
+                        $lists = $conn->prepare("SELECT id, name FROM lists WHERE user_id = ? OR id = 0 ORDER BY id");
                         $lists->execute([$userId]);
                         foreach ($lists->fetchAll(PDO::FETCH_ASSOC) as $list) { ?>
                             <li><a href="listDetail.php?id=<?= htmlspecialchars($list['id']) ?>"><?= htmlspecialchars($list['name']) ?></a></li>
                         <?php } ?>
                     </div>
                 </ul>
+            </div>
+            <div class="logout center">
+                <hr>
+                <a href="login.php" id="logoutLink"><i class='bx bx-log-out'></i><span>Logout</span></a>
             </div>
         </div>
 
@@ -107,7 +112,7 @@ if (isset($_POST['sub'])) {
                         <div id="aiHelpMessage">Loading AI suggestion...</div>
                     </div>
                     <?php
-                    $cards = $conn->prepare("SELECT id, name, deadline, category, position, completed FROM cards WHERE category = ? AND user_id = ? ORDER BY completed ASC, position ASC");
+                    $cards = $conn->prepare("SELECT id, name, deadline, category, position, completed FROM cards WHERE category = ? AND (user_id = ? OR user_id = 0) ORDER BY completed ASC, position ASC");
                     $cards->execute([$listId, $userId]);
                     foreach ($cards->fetchAll(PDO::FETCH_ASSOC) as $card) {
                         $taskId = htmlspecialchars($card['id']);
@@ -127,26 +132,29 @@ if (isset($_POST['sub'])) {
                                 <i class="bx bx-brain"></i> AI Help
                             </a>
 
-                            <a href="deleteCard.php?id=<?= $taskId ?>&list_id=<?= $listId ?>"
-                               onclick="return confirm('Are you sure you want to delete this task?')">
-                                <i class="bx bx-trash-alt"></i> Delete
-                            </a>
+                            <?php if($hasAccess) { ?>
+                                <a href="deleteCard.php?id=<?= $taskId ?>&list_id=<?= $listId ?>"
+                                   onclick="return confirm('Are you sure you want to delete this task?')">
+                                    <i class="bx bx-trash-alt"></i> Delete
+                                </a>
+                            <?php } ?>
                             <span class="drag-handle">&#9776;</span>
                         </div>
-
 
                     <?php } ?>
                 </div>
 
-                <div class="add-new">
-                    <div class="card-new align">
-                        <form method="post">
-                            <input type="text" name="todo" placeholder="Add a task" required>
-                            <input type="date" name="date" required>
-                            <button type="submit" name="sub">Add</button>
-                        </form>
+                <?php if($hasAccess) { ?>
+                    <div class="add-new">
+                        <div class="card-new align">
+                            <form method="post">
+                                <input type="text" name="todo" placeholder="Add a task" required>
+                                <input type="date" name="date" required>
+                                <button type="submit" name="sub">Add</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
+                <?php } ?>
             </div>
         </div>
     </div>
@@ -163,11 +171,6 @@ if (isset($_POST['sub'])) {
         messageElement.innerText = `Fetching AI suggestion for "${taskName}"...`;
         spinner.style.display = 'block'; // Show the spinner
 
-        // Enhanced query for better AI understanding
-        const userQuery = `
-    The task is titled "${taskName}", with a deadline of ${deadline}. The goal is to complete this task successfully by the deadline.
-    Could you please suggest steps or actions that could help the user accomplish this task? Feel free to provide any useful tips, reminders, or methods.`;
-
         try {
             const response = await fetch('aiRequest.php', {
                 method: 'POST',
@@ -175,7 +178,7 @@ if (isset($_POST['sub'])) {
                 body: JSON.stringify({
                     taskName: taskName,
                     deadline: deadline,
-                    userQuery: userQuery // Use the enhanced query here
+                    userQuery: `Give me some steps to complete the task "${taskName}" by ${deadline}`
                 })
             });
 
@@ -197,6 +200,5 @@ if (isset($_POST['sub'])) {
         spinner.style.display = 'none'; // Hide the spinner once response is received
     };
 </script>
-
 </body>
 </html>
